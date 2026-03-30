@@ -1,8 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
 import Layout from '@/views/Layout.vue'
-
-import AttractionsCard from '@/views/cards/AttractionsCard.vue'
 
 const routes = [
     {
@@ -13,7 +10,7 @@ const routes = [
             {
                 path: 'attractions',
                 name: 'Attractions',
-                component: AttractionsCard,
+                component: () => import('@/views/cards/AttractionsCard.vue'),
                 meta: { title: '景点管理' }
             },
             {
@@ -33,7 +30,7 @@ const routes = [
 ]
 
 const router = createRouter({
-    history: createWebHistory(process.env.BASE_URL),
+    history: createWebHistory(),
     routes
 })
 

@@ -1,21 +1,21 @@
 <template>
-  <div class="flex h-screen bg-gray-100">
-    <!-- 侧边栏 -->
+  <el-container class="common-layout" style="height: 100vh;">
+    <!-- 左侧侧边栏 -->
     <Sidebar />
 
-    <!-- 主内容 -->
-    <div class="flex-1 flex flex-col min-h-0 overflow-auto">
-      <!-- 顶部栏 -->
-      <div class="h-16 bg-white border-b flex items-center px-6">
+    <!-- 右侧主内容 -->
+    <el-container>
+      <!-- 顶部 Header -->
+      <el-header height="64px" class="flex items-center px-6 bg-white border-b">
         <h2 class="text-lg font-semibold">{{ pageTitle }}</h2>
-      </div>
+      </el-header>
 
-      <!-- 内容区 -->
-      <div class="flex-1 overflow-auto p-6">
+      <!-- 内容区 Main -->
+      <el-main class="overflow-auto p-6">
         <router-view />
-      </div>
-    </div>
-  </div>
+      </el-main>
+    </el-container>
+  </el-container>
 </template>
 
 <script setup>
@@ -23,13 +23,12 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from '@/components/common/Sidebar.vue'
 
-// 获取当前路由，动态显示页面标题
 const route = useRoute()
 const pageTitle = computed(() => route.meta.title || '')
 </script>
 
 <style scoped>
-/* 保证 flex 布局撑开 */
+/* 保证 el-container 撑满屏幕 */
 html, body, #app {
   height: 100%;
   margin: 0;
