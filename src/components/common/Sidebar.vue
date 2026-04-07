@@ -5,7 +5,7 @@
       <div class="logo-wrapper" v-if="!collapsed">
         <div class="logo-icon">🏞️</div>
         <div>
-          <h1 class="logo-title">旅游后台</h1>
+          <h1 class="logo-title">素材管理</h1>
           <p class="logo-subtitle">Material System</p>
         </div>
       </div>
