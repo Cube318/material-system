@@ -412,22 +412,26 @@ onMounted(() => {
   padding: 20px;
   overflow-y: auto;
   border-right: 1px solid #eee;
+  flex: 1;   /* ❌ 不要写死 40% */
+  min-width: 500px;
 }
 
 /* 右侧预览 */
 .preview-panel {
-  width: 60%;
+  width: 420px;
   display: flex;
   justify-content: center;
   align-items: center;
-
   overflow: auto; /* 防止挤压 */
 }
+
 /* 手机外壳 */
 .phone {
   width: 375px;
   height: 812px;
 
+  //transform: scale(0.7);  /* 👈 推荐 0.65~0.8 */
+  transform-origin: top center;
   flex-shrink: 0; /* 防止被压缩 */
 
   border-radius: 30px;
@@ -479,7 +483,7 @@ onMounted(() => {
   overflow: hidden;
 
   position: relative;
-  argin-bottom: 40px; /* 控制和按钮间距 */
+  margin-bottom: 40px; /* 控制和按钮间距 */
 }
 
 /* 图片/视频填充 */
