@@ -3,7 +3,7 @@
     <!-- Logo -->
     <div class="sidebar-header">
       <div class="logo-wrapper" v-if="!collapsed">
-        <div class="logo-icon">🏞️</div>
+        <div class="logo-icon"><img src="/favicon.png"></div>
         <div>
           <h1 class="logo-title">素材管理</h1>
           <p class="logo-subtitle">Material System</p>
@@ -114,6 +114,17 @@ const toggleCollapse = () => {
   justify-content: center;
   color: #fff;
   font-size: 24px;
+  overflow: hidden;
+}
+
+/* 图片样式 */
+.logo-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-color: #606266;
+  border: 5px solid #fff;
 }
 
 .logo-title {
