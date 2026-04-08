@@ -249,19 +249,24 @@
                 <!-- 媒体卡片 -->
                 <div class="media-box">
 
+                  <!-- 有视频：优先播放 videos[0] -->
+                  <video
+                      v-if="detail.videos && detail.videos.length > 0"
+                      id="previewVideo"
+                      class="media"
+                      :poster="detail.videos[0].thumbnailUrl"
+                      muted
+                      playsinline
+                  >
+                    <source :src="detail.videos[0].videoUrl" type="application/x-mpegURL" />
+                  </video>
+
+                  <!-- 没视频：兜底用图片 -->
                   <img
-                      v-if="detail.imageUrl"
+                      v-else-if="detail.imageUrl"
                       :src="detail.imageUrl"
                       class="media"
                   />
-
-                  <video
-                      v-if="detail.summaryVideoUrl"
-                      class="media"
-                      controls
-                  >
-                    <source :src="detail.summaryVideoUrl"/>
-                  </video>
 
                   <!-- 标题 -->
                   <div class="title">
@@ -294,6 +299,8 @@
 <script setup>
 import {ref, onMounted} from "vue"
 import axios from "axios"
+import Hls from "hls.js"
+import { nextTick } from "vue"
 import templateImg from '@/assets/template.png'
 
 const drawerVisible = ref(false)
@@ -307,6 +314,37 @@ const query = ref({
   size: 10,
   name: ""
 })
+let hlsInstance = null
+
+const initVideo = () => {
+  const video = document.getElementById("previewVideo")
+  const url = detail.value?.videos?.[0]?.videoUrl
+
+  if (!video || !url) return
+
+
+  // 清理旧实例
+  if (hlsInstance) {
+    hlsInstance.destroy()
+    hlsInstance = null
+  }
+
+  if (Hls.isSupported()) {
+    hlsInstance = new Hls()
+    hlsInstance.loadSource(url)
+    hlsInstance.attachMedia(video)
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = url
+  }
+
+  setTimeout(() => {
+    video.play().catch(err => {
+      console.warn("自动播放失败:", err)
+    })
+  }, 3000)
+}
+
+
 
 /**
  * 查询
@@ -354,6 +392,10 @@ const openDrawer = async (id) => {
   try {
     const res = await axios.get(`/api/attraction/${id}`)
     detail.value = res.data.data
+
+    await nextTick()
+    initVideo()
+
   } catch (e) {
     console.error(e)
   }
