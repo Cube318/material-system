@@ -267,6 +267,9 @@
                   <div class="title">
                     {{ detail.name || '景点名称' }}
                   </div>
+                  <div class="valueDesc">
+                    #{{ detail.valueDesc || '景点标签' }}
+                  </div>
 
                 </div>
 
@@ -496,12 +499,22 @@ onMounted(() => {
 /* 标题（34px → 17px） */
 .title {
   position: absolute;
-  bottom: 20px;
-  left: 16px;
+  bottom: 35px;
+  left: 10px;
 
   font-size: 16px;
   font-weight: bold;
   color: #fff;
+}
+
+.valueDesc {
+  position: absolute;
+  bottom: 20px;
+  left: 10px;
+
+  font-size: 13px;
+  font-weight: bold;
+  color: #ffffff;
 }
 
 /* 底部按钮 */
