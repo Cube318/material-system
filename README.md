@@ -1,4 +1,4 @@
-# material-ststem
+# material-system
 
 ## Project setup
 ```
