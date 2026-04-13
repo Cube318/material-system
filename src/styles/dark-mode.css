@@ -1,0 +1,21 @@
+/*
+  ==================================================================
+  全局暗黑模式适配样式
+  作用：覆盖所有页面的默认白色背景，无需在每个页面写代码
+  ==================================================================
+*/
+
+/* 1. 全局页面容器类 */
+.app-container {
+    background-color: var(--el-bg-color);
+    color: var(--el-text-color-primary);
+    min-height: 100vh;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* 2. 通用卡片/内容区域背景 */
+.common-page-card {
+    background-color: var(--el-bg-color);
+    border-color: var(--el-border-color);
+}
+

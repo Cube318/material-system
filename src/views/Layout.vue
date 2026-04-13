@@ -1,17 +1,21 @@
 <template>
-  <el-container class="common-layout" style="height: 100vh;">
+  <el-container class="common-layout">
     <!-- 左侧侧边栏 -->
-    <Sidebar />
+    <el-aside width="auto">
+      <Sidebar />
+    </el-aside>
 
     <!-- 右侧主内容 -->
     <el-container>
       <!-- 顶部 Header -->
-      <el-header height="64px" class="flex items-center px-6 bg-white border-b">
-        <h2 class="text-lg font-semibold">{{ pageTitle }}</h2>
+      <el-header class="layout-header">
+        <h2 class="page-title">{{ pageTitle }}</h2>
+
+        <!-- <ThemeSwitch /> -->
       </el-header>
 
       <!-- 内容区 Main -->
-      <el-main class="overflow-auto p-6">
+      <el-main class="layout-main">
         <router-view />
       </el-main>
     </el-container>
@@ -24,13 +28,44 @@ import { useRoute } from 'vue-router'
 import Sidebar from '@/components/common/Sidebar.vue'
 
 const route = useRoute()
-const pageTitle = computed(() => route.meta.title || '')
+// 这里读取路由 meta 中的 title，记得在 router/index.js 中配置 meta: { title: 'xxx' }
+const pageTitle = computed(() => route.meta.title || '素材管理系统')
 </script>
 
 <style scoped>
-/* 保证 el-container 撑满屏幕 */
-html, body, #app {
+:deep(html), :deep(body), :deep(#app) {
   height: 100%;
   margin: 0;
+  padding: 0;
+}
+
+.common-layout {
+  height: 100vh;
+  width: 100%;
+}
+
+/* Header 样式 */
+.layout-header {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  background-color: var(--el-bg-color); /* 自动适配暗黑模式 */
+  border-bottom: 1px solid var(--el-border-color);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--el-text-color-primary); /* 文字颜色适配 */
+}
+
+/* Main 区域样式 */
+.layout-main {
+  padding: 20px;
+  background: var(--el-bg-color-page);
+  overflow: auto;
+  transition: background-color 0.3s;
 }
 </style>

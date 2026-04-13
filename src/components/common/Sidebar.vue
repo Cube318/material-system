@@ -9,6 +9,17 @@
           <p class="logo-subtitle">Material System</p>
         </div>
       </div>
+      <!--  将 Switch 放在 Header 右侧 -->
+      <div class="header-right">
+        <el-switch
+            v-model="isDark"
+            inline-prompt
+            :active-icon="Moon"
+            :inactive-icon="Sunny"
+            @change="toggle"
+            style="--el-switch-on-color: #4a4a4a; --el-switch-off-color: #fff;"
+        />
+      </div>
       <div class="collapse-btn" @click="toggleCollapse">
         <span>{{ collapsed ? '▶' : '◀' }}</span>
       </div>
@@ -72,17 +83,33 @@ onMounted(() => {
 const toggleCollapse = () => {
   collapsed.value = !collapsed.value
 }
+
+// --- 暗黑模式逻辑 ---
+import { useDark, useToggle } from '@vueuse/core'
+import { Moon, Sunny } from '@element-plus/icons-vue'
+
+const isDark = useDark({
+  storageKey: 'app-theme-mode',
+  valueDark: 'dark',
+  valueLight: 'light',
+})
+
+const toggle = useToggle(isDark)
 </script>
 
-<style scoped>
+<!-- 👇 移除了 scoped，以便能够覆盖全局的 Element Plus 变量 -->
+<style>
 .sidebar-container {
   display: flex;
   flex-direction: column;
   width: 280px;
   height: 100vh;
-  background-color: #fff;
-  border-right: 1px solid #ebeef5;
+  /* 👇 使用 CSS 变量，跟随主题变化 */
+  background-color: var(--el-bg-color);
+  border-right: 1px solid var(--el-border-color);
   flex-shrink: 0;
+  /* 过渡动画，让切换更丝滑 */
+  transition: background-color 0.3s, border-color 0.3s;
 }
 
 .sidebar-container.collapsed {
@@ -95,7 +122,8 @@ const toggleCollapse = () => {
   justify-content: space-between;
   height: 80px;
   padding: 0 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color);
+  transition: border-color 0.3s;
 }
 
 .logo-wrapper {
@@ -117,20 +145,18 @@ const toggleCollapse = () => {
   overflow: hidden;
 }
 
-/* 图片样式 */
 .logo-icon img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
-  border-color: #606266;
-  border: 5px solid #fff;
 }
 
 .logo-title {
   font-size: 18px;
   font-weight: bold;
   margin: 0;
+  color: var(--el-text-color-primary);
 }
 
 .logo-subtitle {
@@ -139,10 +165,17 @@ const toggleCollapse = () => {
   margin: 0;
 }
 
+/* 👇 新增：将 Switch 挤到最右边 */
+.header-right {
+  margin-left: auto;
+  padding: 0 10px;
+}
+
 .collapse-btn {
   cursor: pointer;
   font-size: 18px;
   color: #606266;
+  margin-left: 10px;
 }
 
 .sidebar-menu {
@@ -161,40 +194,47 @@ const toggleCollapse = () => {
   cursor: pointer;
   border-radius: 8px;
   margin: 0 8px;
+  color: var(--el-text-color-regular);
+}
+
+.menu-item:hover {
+  background-color: var(--el-bg-color-overlay);
 }
 
 .menu-item.active {
-  background-color: #f0f9ff;
-  color: #409EFF;
+  background-color: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
 }
 
 .sidebar-footer {
   display: flex;
   align-items: center;
   padding: 10px 20px;
-  border-top: 1px solid #ebeef5;
-  gap: 10px;
+  border-top: 1px solid var(--el-border-color);
+  transition: border-color 0.3s;
 }
 
 .user-avatar {
   width: 40px;
   height: 40px;
-  background-color: #c0c4cc;
+  background-color: var(--el-color-info-light-5);
   border-radius: 50%;
 }
 
 .user-info {
   display: flex;
   flex-direction: column;
+  margin-left: 10px;
 }
 
 .user-name {
   font-size: 14px;
   font-weight: 500;
+  color: var(--el-text-color-primary);
 }
 
 .user-status {
   font-size: 12px;
-  color: #67C23A;
+  color: var(--el-color-success);
 }
 </style>

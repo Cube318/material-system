@@ -733,10 +733,10 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style>
 .page-container {
   padding: 16px;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
   height: 100%;
   box-sizing: border-box;
   overflow: auto; /* 关键：只让这里滚 */
@@ -776,6 +776,7 @@ onMounted(() => {
 .drawer-container {
   display: flex;
   height: 100%;
+  background: var(--el-bg-color);
 }
 
 /* 左侧表单 */

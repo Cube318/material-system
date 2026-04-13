@@ -13,5 +13,15 @@ module.exports = defineConfig({
         }
       }
     }
+  },
+  css: {
+    loaderOptions: {
+      css: {
+        // 这里的资源会自动加载到每个组件的样式之前
+        additionalResources: [
+          './src/styles/dark-mode.css'
+        ]
+      }
+    }
   }
 })
