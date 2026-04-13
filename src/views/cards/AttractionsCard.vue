@@ -808,9 +808,17 @@ onMounted(() => {
   flex-shrink: 0; /* 防止被压缩 */
 
   border-radius: 30px;
-  background: #000;
+  background: linear-gradient(135deg, #3a3a3a 0%, #222222 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border: 1px solid #333;
   padding: 7px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* 🌙 黑暗模式 → 反转成白 */
+:root.dark .phone {
+  background: linear-gradient(135deg, #5a5a5a 0%, #7a7a7a 50%, #4a4a4a 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border: 1px solid #333;
 }
 
 /* 屏幕 */
@@ -910,7 +918,7 @@ onMounted(() => {
 .block {
   margin-bottom: 24px;
   padding: 16px;
-  background: #fafafa;
+  background: var(--el-fill-color-light);
   border-radius: 8px;
   border: 1px solid #ebeef5;
 }
@@ -918,7 +926,7 @@ onMounted(() => {
 .block-title {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  background: var(--el-fill-color-light);
   margin-bottom: 4px;
 }
 
@@ -941,7 +949,7 @@ onMounted(() => {
 .video-wrapper {
   width: 100%;
   /* 删除了 aspect-ratio: 16 / 9; */
-  background: #000;
+  background: var(--el-fill-color-light);
   /* 保持居中，防止小视频贴边 */
   display: flex;
   align-items: center;
