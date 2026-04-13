@@ -38,10 +38,21 @@
         </el-table-column>
 
         <!-- 名称 -->
-        <el-table-column prop="name" label="景点名称" min-width="180"/>
+        <el-table-column label="景点名称" min-width="100">
+          <template #default="scope">
+            <div>
+              <div style="font-weight: 500;">
+                {{ scope.row.name }}
+              </div>
+              <div style="font-size: 12px; color: #999;">
+                ID：{{ scope.row.id }}
+              </div>
+            </div>
+          </template>
+        </el-table-column>
 
         <!-- 标签 -->
-        <el-table-column label="标签" width="100">
+        <el-table-column label="标签" width="150">
           <template #default="scope">
             <el-tag v-if="scope.row.valueDesc" type="success">
               {{ scope.row.valueDesc }}
@@ -50,7 +61,7 @@
         </el-table-column>
 
         <!-- 等级 -->
-        <el-table-column label="等级" width="80">
+        <el-table-column label="等级" width="100">
           <template #default="scope">
             <el-tag type="warning">
               {{ scope.row.grade }}级景点
@@ -103,7 +114,7 @@
     </el-card>
     <el-drawer
         v-model="drawerVisible"
-        title="景点编辑"
+        title="景点详情"
         size="80%"
         direction="rtl"
     >
@@ -111,130 +122,360 @@
 
         <!-- 左侧：表单 -->
         <div class="form-panel">
-          <el-form :model="detail" label-width="80px">
+          <el-form :model="detail" label-width="100px" class="detail-form">
 
-            <el-form-item label="名称">
-              <el-input v-model="detail.name"/>
-            </el-form-item>
+            <!-- 🧩 基础数据 -->
+            <div class="block">
+              <div class="block-title">📌 基础数据</div>
+              <el-divider/>
 
-            <el-form-item label="图片">
-              <el-input v-model="detail.imageUrl"/>
-            </el-form-item>
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="景点名称">
+                    <el-input :model-value="detail.name" disabled/>
+                  </el-form-item>
+                </el-col>
 
-            <el-form-item label="视频">
-              <el-input v-model="detail.summaryVideoUrl"/>
-            </el-form-item>
+                <el-col :span="12">
+                  <el-form-item label="景点等级">
+                    <el-tag type="warning">{{ detail.grade }}级</el-tag>
+                  </el-form-item>
+                </el-col>
 
-            <el-form-item label="标签">
-              <el-input v-model="detail.valueDesc"/>
-            </el-form-item>
+                <el-col :span="12">
+                  <el-form-item label="评分">
+                    <el-rate v-model="detail.rating" disabled/>
+                  </el-form-item>
+                </el-col>
 
-            <el-form-item label="简介">
-              <el-input
-                  v-model="detail.introduce"
-                  type="textarea"
-                  rows="4"
-              />
-            </el-form-item>
+                <el-col :span="12">
+                  <el-form-item label="标签">
+                    <el-tag type="success">{{ detail.valueDesc }}</el-tag>
+                  </el-form-item>
+                </el-col>
 
-            <el-form-item label="地址">
-              <el-input v-model="detail.poi.address"/>
-            </el-form-item>
+                <el-col :span="12">
+                  <el-form-item label="推荐优先级">
+                    <el-input :model-value="detail.recPriority" disabled/>
+                  </el-form-item>
+                </el-col>
 
+                <el-col :span="12">
+                  <el-form-item label="景点ID">
+                    <el-input :model-value="detail.poiObjId" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="开放时间">
+                    <el-input :model-value="detail.openTime" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="关闭时间">
+                    <el-input :model-value="detail.closeTime" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="最后入园时间">
+                    <el-input :model-value="detail.lastEntryTime" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="票价">
+                    <el-input :model-value="detail.ticketPrice" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="24">
+                  <el-form-item label="优势/特色">
+                    <el-input :model-value="detail.advantage" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="24">
+                  <el-form-item label="简介">
+                    <el-input
+                        type="textarea"
+                        :rows="3"
+                        v-model="detail.introduce"
+                        disabled
+                    />
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="封面图">
+                    <el-image
+                        :src="detail.imageUrl"
+                        style="width: 80px; border-radius: 6px"
+                    />
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="视频">
+
+                    <!-- 有视频：点击播放 -->
+                    <div v-if="detail.summaryVideoUrl">
+                      <el-button
+                          type="primary"
+                          link
+                          @click="playVideo(detail.summaryVideoUrl)"
+                      >
+                        ▶ 播放视频
+                      </el-button>
+                    </div>
+
+                    <!-- 空值 -->
+                    <span v-else class="empty-text">—</span>
+
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </div>
+
+            <!-- 🧩 POI 数据 -->
+            <div class="block">
+              <div class="block-title">📍 POI 数据</div>
+              <el-divider/>
+
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="POI名称">
+                    <el-input :model-value="detail.poi.name" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="电话">
+                    <el-input :model-value="detail.poi.tel" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="经度">
+                    <el-input :model-value="detail.poi.longitude" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="纬度">
+                    <el-input :model-value="detail.poi.latitude" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="24">
+                  <el-form-item label="地址">
+                    <el-input :model-value="detail.poi.address" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="24">
+                  <el-form-item label="描述">
+                    <el-input
+                        type="textarea"
+                        :rows="3"
+                        :model-value="detail.poi.description"
+                        disabled
+                    />
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="POI类型">
+                    <el-input :model-value="detail.poi.poiType" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="状态">
+                    <el-tag>{{ detail.poi.status === 1 ? '启用' : '禁用' }}</el-tag>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </div>
+
+            <!-- 🧩 视频数据 -->
+            <div class="block">
+              <div class="block-title">🎬 视频数据</div>
+              <el-divider/>
+
+              <el-table :data="detail.videos || []" border size="small">
+                <el-table-column prop="id" label="ID"/>
+                <el-table-column prop="title" label="标题"/>
+                <el-table-column prop="description" label="描述"/>
+                <el-table-column label="封面" width="100">
+                  <template #default="scope">
+                    <el-image
+                        :src="scope.row.thumbnailUrl"
+                        style="width: 60px; border-radius: 4px"
+                    />
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="视频">
+                  <template #default="scope">
+                    <el-button type="primary" link @click="playVideo(scope.row.videoUrl)">
+                      ▶ 播放视频
+                    </el-button>
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="状态" width="80">
+                  <template #default="scope">
+                    <el-tag :type="scope.row.flag === '1' ? 'success' : 'info'">
+                      {{ scope.row.flag === '1' ? '发布' : '草稿' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="方向" width="80">
+                  <template #default="scope">
+                    <el-tag>{{ scope.row.orientationType === 1 ? '横屏' : '竖屏' }}</el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+
+            <!-- 🧩 音频与讲解 -->
+            <div class="block">
+              <div class="block-title">🎧 音频与讲解</div>
+              <el-divider/>
+
+              <el-row :gutter="20">
+
+                <el-col :span="12">
+                  <el-form-item label="讲解音频">
+                    <audio
+                        v-if="detail.explanationUrl"
+                        :src="detail.explanationUrl"
+                        controls
+                        style="width: 100%;"
+                    />
+                    <span v-else class="empty-text">—</span>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="讲解词">
+                    <el-input
+                        type="textarea"
+                        :rows="2"
+                        :model-value="detail.explanation"
+                        disabled
+                    />
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="介绍音频">
+                    <audio
+                        v-if="detail.introduceAudio"
+                        :src="detail.introduceAudio"
+                        controls
+                        style="width: 100%;"
+                    />
+                    <span v-else class="empty-text">—</span>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </div>
+
+            <!-- 🧩 分类信息 -->
+            <div class="block">
+              <div class="block-title">🏷 分类信息</div>
+              <el-divider/>
+
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="特征类型">
+                    <el-input
+                        :model-value="formatValue(detail.featuresType, featuresTypeMap)"
+                        disabled
+                    />
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="景点类型">
+                    <el-input
+                        :model-value="formatValue(detail.attractionType, attractionTypeMap)"
+                        disabled
+                    />
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="规模">
+                    <el-input
+                        :model-value="formatValue(detail.scale, scaleMap)"
+                        disabled
+                    />
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                <el-form-item label="服务类型">
+                  <div>
+                    <!-- 方案：使用 v-if 判断是否存在内容，存在则循环，不存在则显示 '-' -->
+                    <template v-if="detail.serviceType">
+                      <el-tag
+                          v-for="item in detail.serviceType.split(',')"
+                          :key="item"
+                          style="margin-right: 6px"
+                      >
+                        {{ serviceTypeMap[item] || item }}
+                      </el-tag>
+                    </template>
+                    <span v-else class="empty-text">—</span>
+                  </div>
+                </el-form-item>
+                </el-col>
+              </el-row>
+            </div>
+
+            <!-- 🧩 系统信息（可折叠） -->
+            <div class="block">
+              <div class="block-title">🖥 系统信息</div>
+              <el-divider/>
+
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="创建人">
+                    <el-input :model-value="detail.createBy" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="创建时间">
+                    <el-input :model-value="detail.createTime" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="更新人">
+                    <el-input :model-value="detail.updateBy" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="12">
+                  <el-form-item label="更新时间">
+                    <el-input :model-value="detail.updateTime" disabled/>
+                  </el-form-item>
+                </el-col>
+
+                <el-col :span="24">
+                  <el-form-item label="额外信息">
+                    <el-input type="textarea" :model-value="detail.info" disabled/>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </div>
           </el-form>
-          <el-divider>完整数据</el-divider>
-
-          <!-- 主字段 -->
-          <el-divider>景点基础信息</el-divider>
-          <el-descriptions :column="2" border>
-            <el-descriptions-item label="ID">{{ detail.id }}</el-descriptions-item>
-            <el-descriptions-item label="POI对象ID">{{ detail.poiObjId }}</el-descriptions-item>
-            <el-descriptions-item label="景点名称">{{ detail.name }}</el-descriptions-item>
-            <el-descriptions-item label="卡片标题">{{ detail.title }}</el-descriptions-item>
-            <el-descriptions-item label="景点评级">{{ detail.scenicRating }}</el-descriptions-item>
-            <el-descriptions-item label="景点分级">{{ detail.grade }}</el-descriptions-item>
-            <el-descriptions-item label="景点优先级">{{ detail.recPriority }}</el-descriptions-item>
-            <el-descriptions-item label="价值标签">{{ detail.valueDesc }}</el-descriptions-item>
-            <el-descriptions-item label="所在区域">{{ detail.locationArea }}</el-descriptions-item>
-            <el-descriptions-item label="景点优势">{{ detail.advantage }}</el-descriptions-item>
-            <el-descriptions-item label="评论量">{{ detail.reviewNum }}</el-descriptions-item>
-            <el-descriptions-item label="收藏量">{{ detail.favorite }}</el-descriptions-item>
-            <el-descriptions-item label="评分">{{ detail.rating }}</el-descriptions-item>
-            <el-descriptions-item label="描述">{{ detail.description }}</el-descriptions-item>
-            <el-descriptions-item label="开放时间">{{ detail.openTime }}</el-descriptions-item>
-            <el-descriptions-item label="闭园时间">{{ detail.closeTime }}</el-descriptions-item>
-            <el-descriptions-item label="最晚入园">{{ detail.lastEntryTime }}</el-descriptions-item>
-            <el-descriptions-item label="地址">{{ detail.address }}</el-descriptions-item>
-            <el-descriptions-item label="景点图片">{{ detail.imageUrl }}</el-descriptions-item>
-            <el-descriptions-item label="导览图">{{ detail.guideMapUrl }}</el-descriptions-item>
-            <el-descriptions-item label="导览标识">{{ detail.guideMapFlag }}</el-descriptions-item>
-            <el-descriptions-item label="线路icon">{{ detail.routeIconUrl }}</el-descriptions-item>
-            <el-descriptions-item label="短视频">{{ detail.summaryVideoUrl }}</el-descriptions-item>
-            <el-descriptions-item label="票价">{{ detail.ticketPrice }}</el-descriptions-item>
-            <el-descriptions-item label="景点介绍">{{ detail.introduce }}</el-descriptions-item>
-            <el-descriptions-item label="介绍语音">{{ detail.introduceAudio }}</el-descriptions-item>
-            <el-descriptions-item label="讲解词">{{ detail.explanation }}</el-descriptions-item>
-            <el-descriptions-item label="讲解词语音">{{ detail.explanationUrl }}</el-descriptions-item>
-            <el-descriptions-item label="特征类型">{{ detail.featuresType }}</el-descriptions-item>
-            <el-descriptions-item label="景点类型">{{ detail.attractionType }}</el-descriptions-item>
-            <el-descriptions-item label="规模">{{ detail.scale }}</el-descriptions-item>
-            <el-descriptions-item label="服务类型">{{ detail.serviceType }}</el-descriptions-item>
-            <el-descriptions-item label="创建人">{{ detail.createBy }}</el-descriptions-item>
-            <el-descriptions-item label="创建时间">{{ detail.createTime }}</el-descriptions-item>
-            <el-descriptions-item label="修改人">{{ detail.updateBy }}</el-descriptions-item>
-            <el-descriptions-item label="修改时间">{{ detail.updateTime }}</el-descriptions-item>
-            <el-descriptions-item label="备注">{{ detail.info }}</el-descriptions-item>
-            <el-descriptions-item label="租户ID">{{ detail.tenantId }}</el-descriptions-item>
-          </el-descriptions>
-
-          <el-divider>POI信息</el-divider>
-          <el-descriptions :column="2" border>
-            <el-descriptions-item label="POI名称">{{ detail.poi?.name }}</el-descriptions-item>
-            <el-descriptions-item label="地址">{{ detail.poi?.address }}</el-descriptions-item>
-            <el-descriptions-item label="联系电话">{{ detail.poi?.tel }}</el-descriptions-item>
-            <el-descriptions-item label="经度">{{ detail.poi?.longitude }}</el-descriptions-item>
-            <el-descriptions-item label="纬度">{{ detail.poi?.latitude }}</el-descriptions-item>
-            <el-descriptions-item label="类型">{{ detail.poi?.categoryType }}</el-descriptions-item>
-            <el-descriptions-item label="POI类型">{{ detail.poi?.poiType }}</el-descriptions-item>
-            <el-descriptions-item label="评论量">{{ detail.poi?.reviewNum }}</el-descriptions-item>
-            <el-descriptions-item label="收藏量">{{ detail.poi?.favorite }}</el-descriptions-item>
-            <el-descriptions-item label="状态">{{ detail.poi?.status }}</el-descriptions-item>
-            <el-descriptions-item label="描述">{{ detail.poi?.description }}</el-descriptions-item>
-            <el-descriptions-item label="创建人">{{ detail.poi?.createBy }}</el-descriptions-item>
-            <el-descriptions-item label="创建时间">{{ detail.poi?.createTime }}</el-descriptions-item>
-            <el-descriptions-item label="修改人">{{ detail.poi?.updateBy }}</el-descriptions-item>
-            <el-descriptions-item label="修改时间">{{ detail.poi?.updateTime }}</el-descriptions-item>
-            <el-descriptions-item label="备注">{{ detail.poi?.info }}</el-descriptions-item>
-          </el-descriptions>
-
-          <el-divider>视频信息列表</el-divider>
-          <el-table :data="detail.videos || []" border size="small">
-            <el-table-column prop="id" label="ID" width="80"/>
-            <el-table-column prop="userId" label="达人ID" width="80"/>
-            <el-table-column prop="title" label="标题"/>
-            <el-table-column prop="description" label="描述"/>
-            <el-table-column prop="orientationType" label="类型" width="80"/>
-            <el-table-column prop="thumbnailUrl" label="封面图"/>
-            <el-table-column prop="themeColor" label="主题色"/>
-            <el-table-column prop="videoUrl" label="视频地址"/>
-            <el-table-column prop="createDate" label="创建时间"/>
-            <el-table-column prop="updateDate" label="修改时间"/>
-            <el-table-column label="状态">
-              <template #default="scope">
-                <el-tag :type="scope.row.flag === '1' ? 'success' : 'info'">
-                  {{ scope.row.flag === '1' ? '发布' : '草稿' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="createBy" label="创建人"/>
-            <el-table-column prop="updateBy" label="修改人"/>
-            <el-table-column prop="info" label="备注"/>
-          </el-table>
-
-          <el-divider>原始数据 JSON</el-divider>
-          <pre class="json-view">
-            {{ JSON.stringify(detail, null, 2) }}
-          </pre>
         </div>
 
         <!-- 右侧：手机预览 -->
@@ -258,7 +499,7 @@
                       muted
                       playsinline
                   >
-                    <source :src="detail.videos[0].videoUrl" type="application/x-mpegURL" />
+                    <source :src="detail.videos[0].videoUrl" type="application/x-mpegURL"/>
                   </video>
 
                   <!-- 没视频：兜底用图片 -->
@@ -293,6 +534,23 @@
 
       <el-skeleton v-else rows="6" animated/>
     </el-drawer>
+    <el-dialog
+        v-model="videoVisible"
+        width="60%"
+        top="5vh"
+        :show-close="true"
+        class="video-dialog"
+    >
+      <div class="video-wrapper">
+        <video
+            v-if="currentVideo"
+            :src="currentVideo"
+            controls
+            autoplay
+            class="video-player"
+        />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -300,11 +558,10 @@
 import {ref, onMounted} from "vue"
 import axios from "axios"
 import Hls from "hls.js"
-import { nextTick } from "vue"
+import {nextTick} from "vue"
 import templateImg from '@/assets/template.png'
 
 const drawerVisible = ref(false)
-const detail = ref(null)
 const list = ref([])
 const total = ref(0)
 const loading = ref(false)
@@ -315,6 +572,56 @@ const query = ref({
   name: ""
 })
 let hlsInstance = null
+
+const detail = ref({
+  poi: {},
+  videos: []
+})
+
+const videoVisible = ref(false)
+const currentVideo = ref('')
+
+const playVideo = (url) => {
+  currentVideo.value = url
+  videoVisible.value = true
+}
+
+const featuresTypeMap = {
+  1: '山',
+  2: '水',
+  3: '林',
+  4: '草原',
+  5: '特殊地貌',
+  6: '主题公园',
+  7: '城市地标建筑'
+}
+
+const attractionTypeMap = {
+  1: '历史遗迹',
+  2: '宗教文化',
+  3: '民俗风情',
+  4: '红色旅游',
+  5: '博物馆',
+  6: '非遗馆'
+}
+
+const scaleMap = {
+  1: '超大',
+  2: '大',
+  3: '中',
+  4: '小',
+  5: '微'
+}
+
+const serviceTypeMap = {
+  1: '观光车',
+  2: '园内公交',
+  3: '缆车',
+  4: '游船',
+  5: '餐饮',
+  6: '住宿'
+}
+
 
 const initVideo = () => {
   const video = document.getElementById("previewVideo")
@@ -344,6 +651,19 @@ const initVideo = () => {
   }, 3000)
 }
 
+// 分类信息转换
+const formatValue = (value, map, isMulti = false) => {
+  if (!value) return ''
+
+  if (isMulti) {
+    return value
+        .split(',')
+        .map(v => map[v] || v)
+        .join(' / ')
+  }
+
+  return map[value] || value
+}
 
 
 /**
@@ -391,7 +711,14 @@ const openDrawer = async (id) => {
 
   try {
     const res = await axios.get(`/api/attraction/${id}`)
-    detail.value = res.data.data
+
+    const data = res.data.data
+
+    detail.value = {
+      ...data,
+      poi: data.poi || {},
+      videos: data.videos || []
+    }
 
     await nextTick()
     initVideo()
@@ -457,7 +784,7 @@ onMounted(() => {
   padding: 20px;
   overflow-y: auto;
   border-right: 1px solid #eee;
-  flex: 1;   /* ❌ 不要写死 40% */
+  flex: 1;
   min-width: 500px;
 }
 
@@ -510,14 +837,16 @@ onMounted(() => {
   background-size: cover;
   background-position: center;
 }
+
 .content {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
 
-  padding-top: 90px;  /* 控制上间距 */
+  padding-top: 90px; /* 控制上间距 */
 }
+
 /* 媒体区域（560x996 → 除2） */
 .media-box {
   width: 270px;
@@ -564,7 +893,7 @@ onMounted(() => {
   width: 85%;
   height: 50px;
 
-  margin-top: auto;   /* 自动贴底 */
+  margin-top: auto; /* 自动贴底 */
   margin-bottom: 100px; /* 控制底部距离 */;
 
   background: #E0ED42;
@@ -575,5 +904,57 @@ onMounted(() => {
   justify-content: center;
 
   font-weight: bold;
+}
+
+.block {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #ebeef5;
+}
+
+.block-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.detail-form :deep(.el-form-item) {
+  margin-bottom: 16px;
+}
+
+/*dialog*/
+/*dialog*/
+.video-dialog :deep(.el-dialog) {
+  /* 这里的 max-width 依然有效，视频如果超过 900px 会被限制，小于 900px 则按原尺寸显示 */
+  max-width: 900px;
+  border-radius: 12px;
+  overflow: hidden;
+  /* 建议加上 width: fit-content，让 dialog 宽度跟随内容，而不是默认撑满 */
+  width: fit-content;
+}
+
+/* 视频容器（不再锁死比例，由内容撑开） */
+.video-wrapper {
+  width: 100%;
+  /* 删除了 aspect-ratio: 16 / 9; */
+  background: #000;
+  /* 保持居中，防止小视频贴边 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 视频本体 */
+.video-player {
+  /* 使用 max-width/max-height 限制最大尺寸，而不是强制 100% 拉伸 */
+  max-width: 100%;
+  max-height: 80vh; /* 限制最大高度，防止视频太高超出屏幕 */
+  width: auto;      /* 宽度自适应 */
+  height: auto;     /* 高度自适应 */
+  display: block;
+  border-radius: 8px;
 }
 </style>
