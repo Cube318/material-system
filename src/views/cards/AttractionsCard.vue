@@ -23,6 +23,9 @@
         <el-button type="primary" :icon="Search" @click="handleSearch">
           搜索
         </el-button>
+        <el-button :icon="Refresh" @click="handleReset">
+          重置
+        </el-button>
       </div>
 
       <!-- 📋 表格 -->
@@ -428,21 +431,20 @@
                 </el-col>
 
                 <el-col :span="12">
-                <el-form-item label="服务类型">
-                  <div>
-                    <!-- 方案：使用 v-if 判断是否存在内容，存在则循环，不存在则显示 '-' -->
-                    <template v-if="detail.serviceType">
-                      <el-tag
-                          v-for="item in detail.serviceType.split(',')"
-                          :key="item"
-                          style="margin-right: 6px"
-                      >
-                        {{ serviceTypeMap[item] || item }}
-                      </el-tag>
-                    </template>
-                    <span v-else class="empty-text">—</span>
-                  </div>
-                </el-form-item>
+                  <el-form-item label="服务类型">
+                    <div>
+                      <template v-if="detail.serviceType">
+                        <el-tag
+                            v-for="item in detail.serviceType.split(',')"
+                            :key="item"
+                            style="margin-right: 6px"
+                        >
+                          {{ serviceTypeMap[item] || item }}
+                        </el-tag>
+                      </template>
+                      <span v-else class="empty-text">—</span>
+                    </div>
+                  </el-form-item>
                 </el-col>
               </el-row>
             </div>
@@ -489,55 +491,88 @@
 
         <!-- 右侧：手机预览 -->
         <div class="preview-panel">
-          <div class="phone">
-            <div class="preview-screen"
-                 :style="{ backgroundImage: `url(${templateImg})` }">
+          <!-- 🧰 工具栏 -->
+          <div class="preview-toolbar">
+            <span class="label">缩放%</span>
 
-              <!-- 内容区 -->
-              <div class="content">
+            <!-- 无极滑块 -->
+            <el-slider
+                v-model="scalePercent"
+                :min="30"
+                :max="100"
+                :step="1"
+                style="width: 140px"
+            />
 
-                <!-- 媒体卡片 -->
-                <div class="media-box">
+            <!-- 输入框 -->
+            <el-input-number
+                v-model="scalePercent"
+                :min="30"
+                :max="100"
+                :step="1"
+                size="small"
+                style="width: 90px"
+            />
 
-                  <!-- 有视频：优先播放 videos[0] -->
-                  <video
-                      v-if="detail.videos && detail.videos.length > 0"
-                      id="previewVideo"
-                      class="media"
-                      :poster="detail.videos[0].thumbnailUrl"
-                      muted
-                      playsinline
-                  >
-                    <source :src="detail.videos[0].videoUrl" type="application/x-mpegURL"/>
-                  </video>
+            <el-divider direction="vertical"/>
 
-                  <!-- 没视频：兜底用图片 -->
-                  <img
-                      v-else-if="detail.imageUrl"
-                      :src="detail.imageUrl"
-                      class="media"
-                  />
+            <el-button size="small" @click="handleRefresh">刷新</el-button>
+          </div>
+          <div class="phone-stage">
+            <div
+                class="phone"
+                :key="previewKey"
+                :class="{ 'no-border': !showBorder }"
+                :style="{ transform: `scale(${scale})` }"
+            >
+              <div class="preview-screen"
+                   :style="{ backgroundImage: `url(${templateImg})` }">
 
-                  <!-- 标题 -->
-                  <div class="title">
-                    {{ detail.name || '景点名称' }}
+                <!-- 内容区 -->
+                <div class="content">
+
+                  <!-- 媒体卡片 -->
+                  <div class="media-box">
+
+                    <!-- 有视频：优先播放 videos[0] -->
+                    <video
+                        v-if="detail.videos && detail.videos.length > 0"
+                        id="previewVideo"
+                        class="media"
+                        :poster="detail.videos[0].thumbnailUrl"
+                        muted
+                        playsinline
+                    >
+                      <source :src="detail.videos[0].videoUrl" type="application/x-mpegURL"/>
+                    </video>
+
+                    <!-- 没视频：兜底用图片 -->
+                    <img
+                        v-else-if="detail.imageUrl"
+                        :src="detail.imageUrl"
+                        class="media"
+                    />
+
+                    <!-- 标题 -->
+                    <div class="title">
+                      {{ detail.name || '景点名称' }}
+                    </div>
+                    <div class="valueDesc">
+                      #{{ detail.valueDesc || '景点标签' }}
+                    </div>
+
                   </div>
-                  <div class="valueDesc">
-                    #{{ detail.valueDesc || '景点标签' }}
+
+                  <!-- 底部按钮 -->
+                  <div class="bottom-btn">
+                    立即查看
                   </div>
 
-                </div>
-
-                <!-- 底部按钮 -->
-                <div class="bottom-btn">
-                  立即查看
                 </div>
 
               </div>
-
             </div>
           </div>
-
         </div>
       </div>
 
@@ -631,6 +666,14 @@ const serviceTypeMap = {
   5: '餐饮',
   6: '住宿'
 }
+const scalePercent = ref(80) // 50~100
+const scale = computed(() => scalePercent.value / 100)
+
+// 🔄 刷新预览
+const handleRefresh = async () => {
+  await nextTick()
+  initVideo()
+}
 
 
 const initVideo = () => {
@@ -639,8 +682,6 @@ const initVideo = () => {
 
   if (!video || !url) return
 
-
-  // 清理旧实例
   if (hlsInstance) {
     hlsInstance.destroy()
     hlsInstance = null
@@ -827,8 +868,45 @@ onMounted(() => {
   width: 420px;
   display: flex;
   justify-content: center;
+  flex-direction: column;
   align-items: center;
   overflow: auto; /* 防止挤压 */
+}
+
+/* 工具栏 */
+.preview-toolbar {
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 0 12px;
+  margin-bottom: 12px;
+
+  background: var(--el-bg-color);
+}
+
+.preview-toolbar .label {
+  font-size: 12px;
+  color: #666;
+}
+
+.scale-text {
+  font-size: 12px;
+  color: #999;
+}
+
+
+
+.phone-stage {
+  width: 100%;
+  height: 820px; /* 固定舞台高度 */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  overflow: hidden; /* 👈 防止撑开 */
 }
 
 /* 手机外壳 */
@@ -845,6 +923,7 @@ onMounted(() => {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   border: 1px solid #333;
   padding: 7px;
+  transition: transform 0.2s ease; /* 手机缩放动画更丝滑 */
 }
 
 /* 🌙 黑暗模式 → 反转成白 */
@@ -946,6 +1025,7 @@ onMounted(() => {
   justify-content: center;
 
   font-weight: bold;
+  color: #000000;
 }
 
 .block {
@@ -988,8 +1068,8 @@ onMounted(() => {
 .video-player {
   max-width: 100%;
   max-height: 80vh; /* 限制最大高度，防止视频太高超出屏幕 */
-  width: auto;      /* 宽度自适应 */
-  height: auto;     /* 高度自适应 */
+  width: auto; /* 宽度自适应 */
+  height: auto; /* 高度自适应 */
   display: block;
   border-radius: 8px;
 }
