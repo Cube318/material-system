@@ -200,7 +200,7 @@
                   <el-form-item label="简介">
                     <el-input
                         type="textarea"
-                        :rows="3"
+                        :rows="8"
                         v-model="detail.introduce"
                         disabled
                     />
@@ -935,20 +935,15 @@ onMounted(() => {
 }
 
 /*dialog*/
-/*dialog*/
 .video-dialog :deep(.el-dialog) {
-  /* 这里的 max-width 依然有效，视频如果超过 900px 会被限制，小于 900px 则按原尺寸显示 */
   max-width: 900px;
   border-radius: 12px;
   overflow: hidden;
-  /* 建议加上 width: fit-content，让 dialog 宽度跟随内容，而不是默认撑满 */
   width: fit-content;
 }
 
-/* 视频容器（不再锁死比例，由内容撑开） */
 .video-wrapper {
   width: 100%;
-  /* 删除了 aspect-ratio: 16 / 9; */
   background: var(--el-fill-color-light);
   /* 保持居中，防止小视频贴边 */
   display: flex;
@@ -958,7 +953,6 @@ onMounted(() => {
 
 /* 视频本体 */
 .video-player {
-  /* 使用 max-width/max-height 限制最大尺寸，而不是强制 100% 拉伸 */
   max-width: 100%;
   max-height: 80vh; /* 限制最大高度，防止视频太高超出屏幕 */
   width: auto;      /* 宽度自适应 */
