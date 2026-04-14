@@ -599,7 +599,7 @@
 </template>
 
 <script setup>
-import {ref, onMounted} from "vue"
+import { ref, onMounted, computed } from "vue"
 import axios from "axios"
 import Hls from "hls.js"
 import {nextTick} from "vue"
