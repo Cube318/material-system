@@ -11,7 +11,16 @@
             class="search-input"
             @keyup.enter="handleSearch"
         />
-        <el-button type="primary" @click="handleSearch">
+        <el-select
+            v-model="query.grade"
+            placeholder="景点等级"
+            clearable
+            style="width: 140px"
+        >
+          <el-option label="2级" value="2"/>
+          <el-option label="3级" value="3"/>
+        </el-select>
+        <el-button type="primary" :icon="Search" @click="handleSearch">
           搜索
         </el-button>
       </div>
@@ -560,7 +569,7 @@ import axios from "axios"
 import Hls from "hls.js"
 import {nextTick} from "vue"
 import templateImg from '@/assets/template.png'
-
+import {Search, Refresh} from '@element-plus/icons-vue'
 const drawerVisible = ref(false)
 const list = ref([])
 const total = ref(0)
@@ -569,7 +578,8 @@ const loading = ref(false)
 const query = ref({
   page: 1,
   size: 10,
-  name: ""
+  name: "",
+  grade: "",
 })
 let hlsInstance = null
 
@@ -672,6 +682,20 @@ const formatValue = (value, map, isMulti = false) => {
 const handleSearch = () => {
   query.value.page = 1
   loadData()
+
+}
+/**
+ * 重置
+ */
+const handleReset = () => {
+  query.value = {
+    page: 1,
+    size: 10,
+    name: "",
+    grade: "",
+  }
+
+  loadData()
 }
 
 /**
@@ -689,8 +713,17 @@ const handleSizeChange = (size) => {
 const loadData = async () => {
   loading.value = true
   try {
+
+    const params = {}
+    Object.keys(query.value).forEach(key => {
+      const val = query.value[key]
+      if (val !== '' && val !== null && val !== undefined) {
+        params[key] = val
+      }
+    })
+
     const res = await axios.get("/api/attraction/page", {
-      params: query.value
+      params
     })
 
     const data = res.data.data
