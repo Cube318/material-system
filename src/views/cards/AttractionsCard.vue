@@ -29,13 +29,15 @@
       </div>
 
       <!-- 📋 表格 -->
-      <el-table
+      <div class="table-wrap">
+        <el-table
           :data="list"
           v-loading="loading"
           stripe
           border
           highlight-current-row
-      >
+          height="100%"
+        >
 
         <!-- 封面 -->
         <el-table-column label="封面" width="100">
@@ -44,7 +46,7 @@
                 :src="scope.row.imageUrl"
                 style="width: 60px; height: 60px; border-radius: 6px"
                 fit="cover"
-                preview-src-list="[scope.row.imageUrl]"
+                :preview-src-list="[scope.row.imageUrl]"
             />
           </template>
         </el-table-column>
@@ -106,7 +108,8 @@
           <el-empty description="暂无数据"/>
         </template>
 
-      </el-table>
+        </el-table>
+      </div>
 
       <!-- 📄 分页 -->
       <div class="pagination">
@@ -124,17 +127,16 @@
       </div>
 
     </el-card>
-    <el-drawer
-        v-model="drawerVisible"
-        title="景点详情"
-        size="80%"
-        direction="rtl"
+    <CardDetailDrawerShell
+      v-model="drawerVisible"
+      title="景点详情"
+      size="80%"
+      direction="rtl"
+      v-model:scale-percent="scalePercent"
+      @refresh="handleRefresh"
     >
-      <div class="drawer-container" v-if="detail">
-
-        <!-- 左侧：表单 -->
-        <div class="form-panel">
-          <el-form :model="detail" label-width="100px" class="detail-form">
+      <template #left>
+        <el-form v-if="detail" :model="detail" label-width="100px" class="detail-form">
 
             <!-- 🧩 基础数据 -->
             <div class="block">
@@ -156,7 +158,7 @@
 
                 <el-col :span="12">
                   <el-form-item label="评分">
-                    <el-rate v-model="detail.rating" disabled/>
+                    <el-rate :model-value="detail.rating" disabled/>
                   </el-form-item>
                 </el-col>
 
@@ -213,7 +215,7 @@
                     <el-input
                         type="textarea"
                         :rows="8"
-                        v-model="detail.introduce"
+                        :model-value="detail.introduce"
                         disabled
                     />
                   </el-form-item>
@@ -486,98 +488,49 @@
                 </el-col>
               </el-row>
             </div>
-          </el-form>
-        </div>
+        </el-form>
+        <el-skeleton v-else rows="6" animated />
+      </template>
 
-        <!-- 右侧：手机预览 -->
-        <div class="preview-panel">
-          <!-- 🧰 工具栏 -->
-          <div class="preview-toolbar">
-            <span class="label">缩放%</span>
+      <template #phone>
+        <div
+          v-if="detail"
+          class="phone"
+          :key="previewKey"
+          :style="{ transform: `scale(${scale})` }"
+        >
+          <div class="preview-screen" :style="{ backgroundImage: `url(${templateImg})` }">
+            <div class="content">
+              <div class="media-box">
+                <video
+                  v-if="detail.videos && detail.videos.length > 0"
+                  id="previewVideo"
+                  class="media"
+                  :poster="detail.videos[0].thumbnailUrl"
+                  muted
+                  playsinline
+                >
+                  <source :src="detail.videos[0].videoUrl" type="application/x-mpegURL" />
+                </video>
 
-            <!-- 无极滑块 -->
-            <el-slider
-                v-model="scalePercent"
-                :min="30"
-                :max="100"
-                :step="1"
-                style="width: 140px"
-            />
+                <img v-else-if="detail.imageUrl" :src="detail.imageUrl" class="media" />
 
-            <!-- 输入框 -->
-            <el-input-number
-                v-model="scalePercent"
-                :min="30"
-                :max="100"
-                :step="1"
-                size="small"
-                style="width: 90px"
-            />
-
-            <el-divider direction="vertical"/>
-
-            <el-button size="small" @click="handleRefresh">刷新</el-button>
-          </div>
-          <div class="phone-stage">
-            <div
-                class="phone"
-                :key="previewKey"
-                :class="{ 'no-border': !showBorder }"
-                :style="{ transform: `scale(${scale})` }"
-            >
-              <div class="preview-screen"
-                   :style="{ backgroundImage: `url(${templateImg})` }">
-
-                <!-- 内容区 -->
-                <div class="content">
-
-                  <!-- 媒体卡片 -->
-                  <div class="media-box">
-
-                    <!-- 有视频：优先播放 videos[0] -->
-                    <video
-                        v-if="detail.videos && detail.videos.length > 0"
-                        id="previewVideo"
-                        class="media"
-                        :poster="detail.videos[0].thumbnailUrl"
-                        muted
-                        playsinline
-                    >
-                      <source :src="detail.videos[0].videoUrl" type="application/x-mpegURL"/>
-                    </video>
-
-                    <!-- 没视频：兜底用图片 -->
-                    <img
-                        v-else-if="detail.imageUrl"
-                        :src="detail.imageUrl"
-                        class="media"
-                    />
-
-                    <!-- 标题 -->
-                    <div class="title">
-                      {{ detail.name || '景点名称' }}
-                    </div>
-                    <div class="valueDesc">
-                      #{{ detail.valueDesc || '景点标签' }}
-                    </div>
-
-                  </div>
-
-                  <!-- 底部按钮 -->
-                  <div class="bottom-btn">
-                    立即查看
-                  </div>
-
+                <div class="title">
+                  {{ detail.name || '景点名称' }}
                 </div>
+                <div class="valueDesc">
+                  #{{ detail.valueDesc || '景点标签' }}
+                </div>
+              </div>
 
+              <div class="bottom-btn">
+                立即查看
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <el-skeleton v-else rows="6" animated/>
-    </el-drawer>
+      </template>
+    </CardDetailDrawerShell>
     <el-dialog
         v-model="videoVisible"
         width="60%"
@@ -599,12 +552,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted, computed, watch, nextTick } from "vue"
 import axios from "axios"
 import Hls from "hls.js"
-import {nextTick} from "vue"
 import templateImg from '@/assets/template.png'
 import {Search, Refresh} from '@element-plus/icons-vue'
+import CardDetailDrawerShell from "@/components/cards/CardDetailDrawerShell.vue"
 const drawerVisible = ref(false)
 const list = ref([])
 const total = ref(0)
@@ -630,6 +583,8 @@ const playVideo = (url) => {
   currentVideo.value = url
   videoVisible.value = true
 }
+
+const previewKey = ref(0)
 
 const featuresTypeMap = {
   1: '山',
@@ -671,6 +626,7 @@ const scale = computed(() => scalePercent.value / 100)
 
 // 🔄 刷新预览
 const handleRefresh = async () => {
+  previewKey.value += 1
   await nextTick()
   initVideo()
 }
@@ -687,11 +643,19 @@ const initVideo = () => {
     hlsInstance = null
   }
 
-  if (Hls.isSupported()) {
-    hlsInstance = new Hls()
-    hlsInstance.loadSource(url)
-    hlsInstance.attachMedia(video)
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+  const isHlsUrl = /\.m3u8(\?.*)?$/i.test(url)
+  if (isHlsUrl) {
+    if (Hls.isSupported()) {
+      hlsInstance = new Hls()
+      hlsInstance.loadSource(url)
+      hlsInstance.attachMedia(video)
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url
+    } else {
+      // 不支持 HLS：不强行播放
+      return
+    }
+  } else {
     video.src = url
   }
 
@@ -802,6 +766,13 @@ const openDrawer = async (id) => {
   }
 }
 
+watch(drawerVisible, (visible) => {
+  if (!visible && hlsInstance) {
+    hlsInstance.destroy()
+    hlsInstance = null
+  }
+})
+
 onMounted(() => {
   loadData()
 })
@@ -813,11 +784,15 @@ onMounted(() => {
   background: var(--el-bg-color-page);
   height: 100%;
   box-sizing: border-box;
-  overflow: auto; /* 关键：只让这里滚 */
+  overflow: hidden;
+  min-height: 0;
 }
 
 .card {
   border-radius: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 搜索区 */
@@ -832,6 +807,11 @@ onMounted(() => {
   width: 240px;
 }
 
+.table-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
 /* 分页 */
 .pagination {
   margin-top: 16px;
@@ -842,71 +822,9 @@ onMounted(() => {
 .ellipsis {
   display: -webkit-box;
   -webkit-line-clamp: 2; /* 显示2行 */
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-/* Drawer 内布局 */
-.drawer-container {
-  display: flex;
-  height: 100%;
-  background: var(--el-bg-color);
-}
-
-/* 左侧表单 */
-.form-panel {
-  width: 40%;
-  padding: 20px;
-  overflow-y: auto;
-  border-right: 1px solid #eee;
-  flex: 1;
-  min-width: 500px;
-}
-
-/* 右侧预览 */
-.preview-panel {
-  width: 420px;
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  align-items: center;
-  overflow: auto; /* 防止挤压 */
-}
-
-/* 工具栏 */
-.preview-toolbar {
-  height: 48px;
-
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  padding: 0 12px;
-  margin-bottom: 12px;
-
-  background: var(--el-bg-color);
-}
-
-.preview-toolbar .label {
-  font-size: 12px;
-  color: #666;
-}
-
-.scale-text {
-  font-size: 12px;
-  color: #999;
-}
-
-
-
-.phone-stage {
-  width: 100%;
-  height: 820px; /* 固定舞台高度 */
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-
-  overflow: hidden; /* 👈 防止撑开 */
 }
 
 /* 手机外壳 */
@@ -914,7 +832,7 @@ onMounted(() => {
   width: 375px;
   height: 812px;
 
-  //transform: scale(0.7);  /* 👈 推荐 0.65~0.8 */
+  /* transform: scale(0.7);  👈 推荐 0.65~0.8 */
   transform-origin: top center;
   flex-shrink: 0; /* 防止被压缩 */
 
@@ -1015,7 +933,7 @@ onMounted(() => {
   height: 50px;
 
   margin-top: auto; /* 自动贴底 */
-  margin-bottom: 100px; /* 控制底部距离 */;
+  margin-bottom: 100px; /* 控制底部距离 */
 
   background: #E0ED42;
   border-radius: 25px;
