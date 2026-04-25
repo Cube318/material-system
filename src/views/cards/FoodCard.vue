@@ -225,6 +225,7 @@
           v-if="detail"
           :scale="scale"
           :key="previewKey"
+          :active="drawerVisible"
           :name="detail.name"
           :value-desc="detail.title"
           :image-url="detail.imageUrl"
@@ -257,9 +258,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, nextTick } from "vue"
+import { ref, onMounted, computed, watch } from "vue"
 import axios from "axios"
-import Hls from "hls.js"
 import { Search, Refresh } from "@element-plus/icons-vue"
 import CardDetailDrawerShell from "@/components/cards/CardDetailDrawerShell.vue"
 import PhonePreview from "@/components/cards/PhonePreview.vue"
@@ -277,7 +277,6 @@ const previewKey = ref(0)
 const videoVisible = ref(false)
 const currentVideo = ref("")
 const videoPlayerRef = ref(null)
-let hlsInstance = null
 
 const query = ref({
   page: 1,
@@ -397,58 +396,11 @@ const openDrawer = async (row) => {
   } finally {
     drawerLoading.value = false
   }
-
-  await nextTick()
-  initVideo()
 }
 
-const handleRefresh = async () => {
+const handleRefresh = () => {
   previewKey.value += 1
-  await nextTick()
-  initVideo()
 }
-
-const initVideo = () => {
-  const video = document.getElementById("previewVideo")
-  const url = detail.value?.videoUrl
-  if (!video || !isVideoUrl(url)) return
-
-  if (hlsInstance) {
-    hlsInstance.destroy()
-    hlsInstance = null
-  }
-
-  const isHls = /\.m3u8(\?.*)?$/i.test(url)
-  if (isHls) {
-    if (Hls.isSupported()) {
-      hlsInstance = new Hls()
-      hlsInstance.loadSource(url)
-      hlsInstance.attachMedia(video)
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = url
-    }
-  } else {
-    video.src = url
-  }
-
-  setTimeout(() => {
-    video.play().catch(() => {})
-  }, 300)
-}
-
-watch(drawerVisible, (visible) => {
-  if (!visible) {
-    if (hlsInstance) {
-      hlsInstance.destroy()
-      hlsInstance = null
-    }
-    const previewVideo = document.getElementById('previewVideo')
-    if (previewVideo) {
-      previewVideo.pause()
-      previewVideo.currentTime = 0
-    }
-  }
-})
 
 onMounted(() => {
   loadData()

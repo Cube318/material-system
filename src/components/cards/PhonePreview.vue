@@ -3,17 +3,24 @@
     <div class="preview-screen" :style="{ backgroundImage: `url(${templateImg})` }">
       <div class="content">
         <div class="media-box">
+          <!--
+            showVideo 为 true 时挂载 <video>（v-if 保证 ended/ref 精确管控）；
+            showVideo 为 false 时显示封面图，poster 效果由 img 实现。
+          -->
           <video
-            v-if="videoUrl"
+            v-if="videoUrl && showVideo"
+            ref="videoRef"
             id="previewVideo"
             class="media"
-            :poster="thumbnailUrl || imageUrl"
             muted
             playsinline
-          >
-            <source :src="videoUrl" :type="videoType" />
-          </video>
-          <img v-else :src="imageUrl" :alt="name" class="media" />
+          />
+          <img
+            v-else
+            :src="thumbnailUrl || imageUrl"
+            :alt="name"
+            class="media"
+          />
 
           <div class="label-title">{{ name || '名称' }}</div>
           <div class="label-desc">#{{ valueDesc || '标签' }}</div>
@@ -26,11 +33,13 @@
 </template>
 
 <script setup>
-import { computed, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import Hls from 'hls.js'
 import templateImg from '@/assets/template.png'
 
 const props = defineProps({
   scale:        { type: Number, default: 0.8 },
+  active:       { type: Boolean, default: true },
   name:         { type: String, default: '' },
   valueDesc:    { type: String, default: '' },
   imageUrl:     { type: String, default: '' },
@@ -38,18 +47,112 @@ const props = defineProps({
   thumbnailUrl: { type: String, default: '' },
 })
 
-const videoType = computed(() => {
-  if (/\.m3u8(\?.*)?$/i.test(props.videoUrl)) return 'application/x-mpegURL'
-  if (/\.webm(\?.*)?$/i.test(props.videoUrl)) return 'video/webm'
-  if (/\.ogg(\?.*)?$/i.test(props.videoUrl)) return 'video/ogg'
-  return 'video/mp4'
+const videoRef  = ref(null)
+const showVideo = ref(false)
+
+let hlsInstance = null
+let playTimer   = null
+
+// ── 工具 ────────────────────────────────────────
+
+const clearTimer = () => {
+  if (playTimer !== null) {
+    clearTimeout(playTimer)
+    playTimer = null
+  }
+}
+
+const destroyHls = () => {
+  if (hlsInstance) {
+    hlsInstance.destroy()
+    hlsInstance = null
+  }
+}
+
+// ── 播放循环 ─────────────────────────────────────
+
+/** 视频播放结束 → 回封面 → 3 秒后再次播放 */
+const onVideoEnded = () => {
+  const video = videoRef.value
+  if (video) {
+    video.removeEventListener('ended', onVideoEnded)
+    video.pause()
+    video.currentTime = 0
+  }
+  destroyHls()
+  showVideo.value = false              // v-if 销毁 <video> 元素，回到封面
+  playTimer = setTimeout(startPlayback, 3000)
+}
+
+/** 切换到视频 → 初始化 HLS / 设置 src → 播放 */
+const startPlayback = async () => {
+  if (!props.videoUrl || !props.active) return
+
+  showVideo.value = true               // 挂载 <video> 元素
+  await nextTick()                     // 等待 DOM 就绪
+
+  const video = videoRef.value
+  if (!video) return
+
+  video.addEventListener('ended', onVideoEnded)
+
+  const isHls = /\.m3u8(\?.*)?$/i.test(props.videoUrl)
+  if (isHls) {
+    if (Hls.isSupported()) {
+      destroyHls()
+      hlsInstance = new Hls()
+      hlsInstance.loadSource(props.videoUrl)
+      hlsInstance.attachMedia(video)
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {})
+      })
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = props.videoUrl
+      video.play().catch(() => {})
+    }
+  } else {
+    video.src = props.videoUrl
+    video.play().catch(() => {})
+  }
+}
+
+/** 重置定时器并在 3 秒后开始播放 */
+const schedulePlay = () => {
+  clearTimer()
+  playTimer = setTimeout(startPlayback, 3000)
+}
+
+/** 停止一切播放并回到封面（timer、HLS、video 元素三重清理） */
+const cleanup = () => {
+  clearTimer()
+  const video = videoRef.value
+  if (video) {
+    video.removeEventListener('ended', onVideoEnded)
+    video.pause()
+    video.currentTime = 0
+    video.src = ''
+    video.load()   // 中止所有网络请求
+  }
+  destroyHls()
+  showVideo.value = false
+}
+
+// ── 生命周期 ─────────────────────────────────────
+
+onMounted(() => {
+  if (props.videoUrl && props.active) schedulePlay()
 })
 
 onUnmounted(() => {
-  const video = document.getElementById('previewVideo')
-  if (video) {
-    video.pause()
-    video.currentTime = 0
+  cleanup()
+})
+
+// 抽屉关闭（active=false）时暂停；重新打开时重新调度
+watch(() => props.active, (active) => {
+  if (!active) {
+    cleanup()
+  } else if (props.videoUrl) {
+    schedulePlay()
   }
 })
 </script>
