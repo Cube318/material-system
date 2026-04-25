@@ -3,9 +3,15 @@ import Layout from '@/views/Layout.vue'
 
 const routes = [
     {
+        path: '/login',
+        name: 'Login',
+        component: () => import('@/views/Login.vue'),
+        meta: { title: '登录' }
+    },
+    {
         path: '/',
         component: Layout,
-        redirect: '/attractions',
+        redirect: '/login',
         children: [
             {
                 path: 'attractions',
