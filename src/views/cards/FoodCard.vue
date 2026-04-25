@@ -109,9 +109,7 @@
     >
       <template #left>
         <el-form v-if="detail" :model="detail" label-width="100px" class="detail-form">
-          <div class="block">
-            <div class="block-title">基础信息</div>
-            <el-divider />
+          <DetailSection title="基础信息">
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-form-item label="美食名称">
@@ -165,11 +163,9 @@
                 </el-form-item>
               </el-col>
             </el-row>
-          </div>
+          </DetailSection>
 
-          <div class="block">
-            <div class="block-title">媒体与链接</div>
-            <el-divider />
+          <DetailSection title="媒体与链接">
             <el-row :gutter="20">
               <el-col :span="12">
                 <el-form-item label="菜品图">
@@ -212,45 +208,17 @@
                 </el-form-item>
               </el-col>
             </el-row>
-          </div>
+          </DetailSection>
 
-          <div class="block">
-            <div class="block-title">系统信息</div>
-            <el-divider />
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="创建人">
-                  <el-input :model-value="detail.createBy || '-'" disabled />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="创建时间">
-                  <el-input :model-value="detail.createTime || '-'" disabled />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="更新人">
-                  <el-input :model-value="detail.updateBy || '-'" disabled />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="更新时间">
-                  <el-input :model-value="detail.updateTime || '-'" disabled />
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </div>
+          <DetailSection title="系统信息">
+            <DetailTable :fields="systemInfoFields" />
+          </DetailSection>
         </el-form>
         <el-skeleton v-else rows="6" animated />
       </template>
 
       <template #phone>
-        <div
-          v-if="detail"
-          class="phone"
-          :key="previewKey"
-          :style="{ transform: `scale(${scale})` }"
-        >
+        <PhonePreview v-if="detail" :scale="scale" :key="previewKey">
           <div
             class="preview-screen"
             :style="{ background: detail.themeBg || '#89C1A1' }"
@@ -281,7 +249,7 @@
               <div class="bottom-btn">立即下单</div>
             </div>
           </div>
-        </div>
+        </PhonePreview>
       </template>
     </CardDetailDrawerShell>
 
@@ -311,6 +279,9 @@ import axios from "axios"
 import Hls from "hls.js"
 import { Search, Refresh } from "@element-plus/icons-vue"
 import CardDetailDrawerShell from "@/components/cards/CardDetailDrawerShell.vue"
+import PhonePreview from "@/components/cards/PhonePreview.vue"
+import DetailSection from "@/components/cards/DetailSection.vue"
+import DetailTable from "@/components/cards/DetailTable.vue"
 
 const drawerVisible = ref(false)
 const list = ref([])
@@ -333,6 +304,13 @@ const query = ref({
 
 const scalePercent = ref(80)
 const scale = computed(() => scalePercent.value / 100)
+
+const systemInfoFields = computed(() => [
+  { label: '创建人',   value: detail.value?.createBy },
+  { label: '创建时间', value: detail.value?.createTime },
+  { label: '更新人',   value: detail.value?.updateBy },
+  { label: '更新时间', value: detail.value?.updateTime },
+])
 
 const formatPrice = (value) => {
   if (value === null || value === undefined || value === "") return "-"
@@ -537,23 +515,6 @@ onMounted(() => {
   color: #999;
 }
 
-.block {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: var(--el-fill-color-light);
-  border-radius: 8px;
-  border: 1px solid #ebeef5;
-}
-
-.block-title {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.detail-form :deep(.el-form-item) {
-  margin-bottom: 16px;
-}
-
 .theme-wrap {
   display: inline-flex;
   align-items: center;
@@ -569,19 +530,6 @@ onMounted(() => {
 
 .theme-text {
   color: #606266;
-}
-
-.phone {
-  width: 375px;
-  height: 812px;
-  transform-origin: top center;
-  flex-shrink: 0;
-  border-radius: 30px;
-  background: linear-gradient(135deg, #3a3a3a 0%, #222222 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  border: 1px solid #333;
-  padding: 7px;
-  transition: transform 0.2s ease;
 }
 
 .preview-screen {

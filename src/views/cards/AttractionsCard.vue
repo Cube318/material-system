@@ -139,9 +139,7 @@
         <el-form v-if="detail" :model="detail" label-width="100px" class="detail-form">
 
             <!-- 🧩 基础数据 -->
-            <div class="block">
-              <div class="block-title">📌 基础数据</div>
-              <el-divider/>
+            <DetailSection title="📌 基础数据">
 
               <el-row :gutter="20">
                 <el-col :span="12">
@@ -250,12 +248,10 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-            </div>
+            </DetailSection>
 
             <!-- 🧩 POI 数据 -->
-            <div class="block">
-              <div class="block-title">📍 POI 数据</div>
-              <el-divider/>
+            <DetailSection title="📍 POI 数据">
 
               <el-row :gutter="20">
                 <el-col :span="12">
@@ -311,12 +307,10 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-            </div>
+            </DetailSection>
 
             <!-- 🧩 视频数据 -->
-            <div class="block">
-              <div class="block-title">🎬 视频数据</div>
-              <el-divider/>
+            <DetailSection title="🎬 视频数据">
 
               <el-table :data="detail.videos || []" border size="small">
                 <el-table-column prop="id" label="ID"/>
@@ -353,12 +347,10 @@
                   </template>
                 </el-table-column>
               </el-table>
-            </div>
+            </DetailSection>
 
             <!-- 🧩 音频与讲解 -->
-            <div class="block">
-              <div class="block-title">🎧 音频与讲解</div>
-              <el-divider/>
+            <DetailSection title="🎧 音频与讲解">
 
               <el-row :gutter="20">
 
@@ -397,12 +389,10 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-            </div>
+            </DetailSection>
 
             <!-- 🧩 分类信息 -->
-            <div class="block">
-              <div class="block-title">🏷 分类信息</div>
-              <el-divider/>
+            <DetailSection title="🏷 分类信息">
 
               <el-row :gutter="20">
                 <el-col :span="12">
@@ -449,56 +439,18 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-            </div>
+            </DetailSection>
 
-            <!-- 🧩 系统信息（可折叠） -->
-            <div class="block">
-              <div class="block-title">🖥 系统信息</div>
-              <el-divider/>
-
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item label="创建人">
-                    <el-input :model-value="detail.createBy" disabled/>
-                  </el-form-item>
-                </el-col>
-
-                <el-col :span="12">
-                  <el-form-item label="创建时间">
-                    <el-input :model-value="detail.createTime" disabled/>
-                  </el-form-item>
-                </el-col>
-
-                <el-col :span="12">
-                  <el-form-item label="更新人">
-                    <el-input :model-value="detail.updateBy" disabled/>
-                  </el-form-item>
-                </el-col>
-
-                <el-col :span="12">
-                  <el-form-item label="更新时间">
-                    <el-input :model-value="detail.updateTime" disabled/>
-                  </el-form-item>
-                </el-col>
-
-                <el-col :span="24">
-                  <el-form-item label="额外信息">
-                    <el-input type="textarea" :model-value="detail.info" disabled/>
-                  </el-form-item>
-                </el-col>
-              </el-row>
-            </div>
+            <!-- 🧩 系统信息 -->
+            <DetailSection title="🖥 系统信息">
+              <DetailTable :fields="systemInfoFields" />
+            </DetailSection>
         </el-form>
         <el-skeleton v-else rows="6" animated />
       </template>
 
       <template #phone>
-        <div
-          v-if="detail"
-          class="phone"
-          :key="previewKey"
-          :style="{ transform: `scale(${scale})` }"
-        >
+        <PhonePreview v-if="detail" :scale="scale" :key="previewKey">
           <div class="preview-screen" :style="{ backgroundImage: `url(${templateImg})` }">
             <div class="content">
               <div class="media-box">
@@ -528,7 +480,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </PhonePreview>
       </template>
     </CardDetailDrawerShell>
     <el-dialog
@@ -558,6 +510,9 @@ import Hls from "hls.js"
 import templateImg from '@/assets/template.png'
 import {Search, Refresh} from '@element-plus/icons-vue'
 import CardDetailDrawerShell from "@/components/cards/CardDetailDrawerShell.vue"
+import PhonePreview from "@/components/cards/PhonePreview.vue"
+import DetailSection from "@/components/cards/DetailSection.vue"
+import DetailTable from "@/components/cards/DetailTable.vue"
 const drawerVisible = ref(false)
 const list = ref([])
 const total = ref(0)
@@ -623,6 +578,14 @@ const serviceTypeMap = {
 }
 const scalePercent = ref(80) // 50~100
 const scale = computed(() => scalePercent.value / 100)
+
+const systemInfoFields = computed(() => [
+  { label: '创建人',    value: detail.value?.createBy },
+  { label: '创建时间',  value: detail.value?.createTime },
+  { label: '更新人',    value: detail.value?.updateBy },
+  { label: '更新时间',  value: detail.value?.updateTime },
+  { label: '额外信息',  value: detail.value?.info, span: 24, type: 'textarea' },
+])
 
 // 🔄 刷新预览
 const handleRefresh = async () => {
@@ -786,6 +749,7 @@ onMounted(() => {
   box-sizing: border-box;
   overflow: hidden;
   min-height: 0;
+
 }
 
 .card {
@@ -825,30 +789,6 @@ onMounted(() => {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-/* 手机外壳 */
-.phone {
-  width: 375px;
-  height: 812px;
-
-  /* transform: scale(0.7);  👈 推荐 0.65~0.8 */
-  transform-origin: top center;
-  flex-shrink: 0; /* 防止被压缩 */
-
-  border-radius: 30px;
-  background: linear-gradient(135deg, #3a3a3a 0%, #222222 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  border: 1px solid #333;
-  padding: 7px;
-  transition: transform 0.2s ease; /* 手机缩放动画更丝滑 */
-}
-
-/* 🌙 黑暗模式 → 反转成白 */
-:root.dark .phone {
-  background: linear-gradient(135deg, #5a5a5a 0%, #7a7a7a 50%, #4a4a4a 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  border: 1px solid #333;
 }
 
 /* 屏幕 */
@@ -946,23 +886,8 @@ onMounted(() => {
   color: #000000;
 }
 
-.block {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: var(--el-fill-color-light);
-  border-radius: 8px;
-  border: 1px solid #ebeef5;
-}
-
-.block-title {
-  font-size: 16px;
-  font-weight: 600;
-  background: var(--el-fill-color-light);
-  margin-bottom: 4px;
-}
-
-.detail-form :deep(.el-form-item) {
-  margin-bottom: 16px;
+.empty-text {
+  color: #999;
 }
 
 /*dialog*/
