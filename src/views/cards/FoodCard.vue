@@ -36,6 +36,7 @@
                 style="width: 60px; height: 60px; border-radius: 6px"
                 fit="cover"
                 :preview-src-list="[scope.row.imageUrl]"
+                preview-teleported
               />
             </template>
           </el-table-column>
@@ -174,6 +175,7 @@
                     style="width: 80px; height: 80px; border-radius: 6px"
                     fit="cover"
                     :preview-src-list="[detail.imageUrl]"
+                    preview-teleported
                   />
                 </el-form-item>
               </el-col>
@@ -185,6 +187,7 @@
                     style="width: 80px; height: 80px; border-radius: 6px"
                     fit="cover"
                     :preview-src-list="[detail.coverImageUrl]"
+                    preview-teleported
                   />
                   <span v-else class="empty-text">—</span>
                 </el-form-item>
@@ -218,38 +221,16 @@
       </template>
 
       <template #phone>
-        <PhonePreview v-if="detail" :scale="scale" :key="previewKey">
-          <div
-            class="preview-screen"
-            :style="{ background: detail.themeBg || '#89C1A1' }"
-          >
-            <div class="content">
-              <div class="media-box">
-                <video
-                  v-if="isVideoUrl(detail.videoUrl)"
-                  id="previewVideo"
-                  class="media"
-                  :poster="detail.coverImageUrl || detail.imageUrl"
-                  muted
-                  playsinline
-                >
-                  <source :src="detail.videoUrl" :type="getVideoType(detail.videoUrl)" />
-                </video>
-                <img v-else :src="detail.imageUrl" class="media" />
-
-                <div class="title">{{ detail.name || "美食名称" }}</div>
-                <div class="valueDesc">{{ detail.title || "美食标题" }}</div>
-              </div>
-
-              <div class="price-line">
-                <span class="promo">{{ formatPrice(detail.promoPrice) }}</span>
-                <span class="origin">{{ formatPrice(detail.price) }}</span>
-              </div>
-
-              <div class="bottom-btn">立即下单</div>
-            </div>
-          </div>
-        </PhonePreview>
+        <PhonePreview
+          v-if="detail"
+          :scale="scale"
+          :key="previewKey"
+          :name="detail.name"
+          :value-desc="detail.title"
+          :image-url="detail.imageUrl"
+          :video-url="isVideoUrl(detail.videoUrl) ? detail.videoUrl : ''"
+          :thumbnail-url="detail.coverImageUrl || detail.imageUrl"
+        />
       </template>
     </CardDetailDrawerShell>
 
@@ -259,10 +240,12 @@
       top="5vh"
       :show-close="true"
       class="video-dialog"
+      @close="handleVideoClose"
     >
       <div class="video-wrapper">
         <video
           v-if="currentVideo"
+          ref="videoPlayerRef"
           :src="currentVideo"
           controls
           autoplay
@@ -293,6 +276,7 @@ const previewKey = ref(0)
 
 const videoVisible = ref(false)
 const currentVideo = ref("")
+const videoPlayerRef = ref(null)
 let hlsInstance = null
 
 const query = ref({
@@ -323,17 +307,18 @@ const isVideoUrl = (url) => {
   return /\.(m3u8|mp4|webm|ogg)(\?.*)?$/i.test(url)
 }
 
-const getVideoType = (url) => {
-  if (/\.m3u8(\?.*)?$/i.test(url)) return "application/x-mpegURL"
-  if (/\.webm(\?.*)?$/i.test(url)) return "video/webm"
-  if (/\.ogg(\?.*)?$/i.test(url)) return "video/ogg"
-  return "video/mp4"
-}
-
 const playVideo = (url) => {
   if (!isVideoUrl(url)) return
   currentVideo.value = url
   videoVisible.value = true
+}
+
+const handleVideoClose = () => {
+  if (videoPlayerRef.value) {
+    videoPlayerRef.value.pause()
+    videoPlayerRef.value.currentTime = 0
+  }
+  currentVideo.value = ''
 }
 
 const handleSearch = () => {
@@ -452,9 +437,16 @@ const initVideo = () => {
 }
 
 watch(drawerVisible, (visible) => {
-  if (!visible && hlsInstance) {
-    hlsInstance.destroy()
-    hlsInstance = null
+  if (!visible) {
+    if (hlsInstance) {
+      hlsInstance.destroy()
+      hlsInstance = null
+    }
+    const previewVideo = document.getElementById('previewVideo')
+    if (previewVideo) {
+      previewVideo.pause()
+      previewVideo.currentTime = 0
+    }
   }
 })
 
@@ -530,93 +522,6 @@ onMounted(() => {
 
 .theme-text {
   color: #606266;
-}
-
-.preview-screen {
-  width: 100%;
-  height: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 80px;
-}
-
-.media-box {
-  width: 280px;
-  height: 430px;
-  border-radius: 25px;
-  border: 4px solid #fff;
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 24px;
-}
-
-.media {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.title {
-  position: absolute;
-  bottom: 42px;
-  left: 12px;
-  right: 12px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-}
-
-.valueDesc {
-  position: absolute;
-  bottom: 20px;
-  left: 12px;
-  right: 12px;
-  font-size: 13px;
-  color: #fff;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-}
-
-.price-line {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.price-line .promo {
-  color: #e6f624;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.price-line .origin {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: line-through;
-  font-size: 15px;
-}
-
-.bottom-btn {
-  width: 85%;
-  height: 50px;
-  margin-top: auto;
-  margin-bottom: 96px;
-  background: #e0ed42;
-  border-radius: 25px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: #111;
 }
 
 .video-dialog :deep(.el-dialog) {

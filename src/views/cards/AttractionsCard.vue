@@ -47,6 +47,7 @@
                 style="width: 60px; height: 60px; border-radius: 6px"
                 fit="cover"
                 :preview-src-list="[scope.row.imageUrl]"
+                preview-teleported
             />
           </template>
         </el-table-column>
@@ -358,6 +359,7 @@
                   <el-form-item label="讲解音频">
                     <audio
                         v-if="detail.explanationUrl"
+                        ref="audio1Ref"
                         :src="detail.explanationUrl"
                         controls
                         style="width: 100%;"
@@ -381,6 +383,7 @@
                   <el-form-item label="介绍音频">
                     <audio
                         v-if="detail.introduceAudio"
+                        ref="audio2Ref"
                         :src="detail.introduceAudio"
                         controls
                         style="width: 100%;"
@@ -450,37 +453,16 @@
       </template>
 
       <template #phone>
-        <PhonePreview v-if="detail" :scale="scale" :key="previewKey">
-          <div class="preview-screen" :style="{ backgroundImage: `url(${templateImg})` }">
-            <div class="content">
-              <div class="media-box">
-                <video
-                  v-if="detail.videos && detail.videos.length > 0"
-                  id="previewVideo"
-                  class="media"
-                  :poster="detail.videos[0].thumbnailUrl"
-                  muted
-                  playsinline
-                >
-                  <source :src="detail.videos[0].videoUrl" type="application/x-mpegURL" />
-                </video>
-
-                <img v-else-if="detail.imageUrl" :src="detail.imageUrl" class="media" />
-
-                <div class="title">
-                  {{ detail.name || '景点名称' }}
-                </div>
-                <div class="valueDesc">
-                  #{{ detail.valueDesc || '景点标签' }}
-                </div>
-              </div>
-
-              <div class="bottom-btn">
-                立即查看
-              </div>
-            </div>
-          </div>
-        </PhonePreview>
+        <PhonePreview
+          v-if="detail"
+          :scale="scale"
+          :key="previewKey"
+          :name="detail.name"
+          :value-desc="detail.valueDesc"
+          :image-url="detail.imageUrl"
+          :video-url="detail.videos?.[0]?.videoUrl || ''"
+          :thumbnail-url="detail.videos?.[0]?.thumbnailUrl || ''"
+        />
       </template>
     </CardDetailDrawerShell>
     <el-dialog
@@ -489,10 +471,12 @@
         top="5vh"
         :show-close="true"
         class="video-dialog"
+        @close="handleVideoClose"
     >
       <div class="video-wrapper">
         <video
             v-if="currentVideo"
+            ref="videoPlayerRef"
             :src="currentVideo"
             controls
             autoplay
@@ -507,7 +491,6 @@
 import { ref, onMounted, computed, watch, nextTick } from "vue"
 import axios from "axios"
 import Hls from "hls.js"
-import templateImg from '@/assets/template.png'
 import {Search, Refresh} from '@element-plus/icons-vue'
 import CardDetailDrawerShell from "@/components/cards/CardDetailDrawerShell.vue"
 import PhonePreview from "@/components/cards/PhonePreview.vue"
@@ -533,10 +516,21 @@ const detail = ref({
 
 const videoVisible = ref(false)
 const currentVideo = ref('')
+const videoPlayerRef = ref(null)
+const audio1Ref = ref(null)
+const audio2Ref = ref(null)
 
 const playVideo = (url) => {
   currentVideo.value = url
   videoVisible.value = true
+}
+
+const handleVideoClose = () => {
+  if (videoPlayerRef.value) {
+    videoPlayerRef.value.pause()
+    videoPlayerRef.value.currentTime = 0
+  }
+  currentVideo.value = ''
 }
 
 const previewKey = ref(0)
@@ -730,9 +724,24 @@ const openDrawer = async (id) => {
 }
 
 watch(drawerVisible, (visible) => {
-  if (!visible && hlsInstance) {
-    hlsInstance.destroy()
-    hlsInstance = null
+  if (!visible) {
+    if (hlsInstance) {
+      hlsInstance.destroy()
+      hlsInstance = null
+    }
+    const previewVideo = document.getElementById('previewVideo')
+    if (previewVideo) {
+      previewVideo.pause()
+      previewVideo.currentTime = 0
+    }
+    if (audio1Ref.value) {
+      audio1Ref.value.pause()
+      audio1Ref.value.currentTime = 0
+    }
+    if (audio2Ref.value) {
+      audio2Ref.value.pause()
+      audio2Ref.value.currentTime = 0
+    }
   }
 })
 
@@ -789,101 +798,6 @@ onMounted(() => {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-/* 屏幕 */
-.screen {
-  width: 100%;
-  height: 100%;
-  background: #fff;
-  border-radius: 20px;
-  overflow-y: auto;
-  padding: 10px;
-}
-
-/* 内容 */
-/* 新的屏幕（蓝湖背景） */
-.preview-screen {
-  width: 100%;
-  height: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-
-  display: flex;
-  flex-direction: column;
-
-  background: linear-gradient(0deg, #EFF0EB 70%, #FFFFFF 85%);
-  background-size: cover;
-  background-position: center;
-}
-
-.content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  padding-top: 90px; /* 控制上间距 */
-}
-
-/* 媒体区域（560x996 → 除2） */
-.media-box {
-  width: 270px;
-  height: 498px;
-
-  border-radius: 25px;
-  border: 4px solid #fff;
-  overflow: hidden;
-
-  position: relative;
-  margin-bottom: 40px; /* 控制和按钮间距 */
-}
-
-/* 图片/视频填充 */
-.media {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* 标题（34px → 17px） */
-.title {
-  position: absolute;
-  bottom: 35px;
-  left: 10px;
-
-  font-size: 16px;
-  font-weight: bold;
-  color: #fff;
-}
-
-.valueDesc {
-  position: absolute;
-  bottom: 20px;
-  left: 10px;
-
-  font-size: 13px;
-  font-weight: bold;
-  color: #ffffff;
-}
-
-/* 底部按钮 */
-.bottom-btn {
-  width: 85%;
-  height: 50px;
-
-  margin-top: auto; /* 自动贴底 */
-  margin-bottom: 100px; /* 控制底部距离 */
-
-  background: #E0ED42;
-  border-radius: 25px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-weight: bold;
-  color: #000000;
 }
 
 .empty-text {
