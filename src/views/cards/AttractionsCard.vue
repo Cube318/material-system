@@ -778,7 +778,7 @@ onMounted(() => {
 })
 </script>
 
-<style>
+<style scoped>
 .page-container {
   padding: 16px;
   background: var(--el-bg-color-page);
