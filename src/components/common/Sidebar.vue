@@ -61,9 +61,10 @@ const collapsed = ref(false)
 const activeMenu = ref('attractions')
 
 const menus = [
-  { key: 'attractions', label: '景点管理', icon: '🏔️', path: '/attractions' },
-  { key: 'products', label: '商品管理', icon: '🛍️', path: '/products' },
-  { key: 'food', label: '美食管理', icon: '🍜', path: '/food' }
+  { key: 'attractions',   label: '景点管理',   icon: '🏔️', path: '/attractions' },
+  { key: 'products',      label: '商品管理',   icon: '🛍️', path: '/products' },
+  { key: 'food',          label: '美食管理',   icon: '🍜', path: '/food' },
+  { key: 'video-replace', label: '视频替换工具', icon: '🎬', path: '/video-replace' }
 ]
 
 const handleMenuSelect = (key) => {

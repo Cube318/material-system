@@ -30,6 +30,12 @@ const routes = [
                 name: 'Food',
                 component: () => import('@/views/cards/FoodCard.vue'),
                 meta: { title: '美食管理' }
+            },
+            {
+                path: 'video-replace',
+                name: 'VideoReplace',
+                component: () => import('@/views/cards/VideoReplaceCard.vue'),
+                meta: { title: '视频替换工具' }
             }
         ]
     }
