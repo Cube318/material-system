@@ -9,19 +9,35 @@
           <p class="logo-subtitle">Material System</p>
         </div>
       </div>
-      <!--  将 Switch 放在 Header 右侧 -->
-      <div class="header-right">
-        <el-switch
-            v-model="isDark"
-            inline-prompt
-            :active-icon="Moon"
-            :inactive-icon="Sunny"
-            @change="toggle"
-            style="--el-switch-on-color: #4a4a4a; --el-switch-off-color: #fff;"
-        />
+      
+      <!-- 收缩状态下只显示 Logo 图标 -->
+      <div class="logo-icon-mini" v-if="collapsed">
+        <img src="/favicon.png">
       </div>
-      <div class="collapse-btn" @click="toggleCollapse">
-        <span>{{ collapsed ? '▶' : '◀' }}</span>
+      
+      <div class="header-actions" v-if="!collapsed">
+        <!-- 暗黑模式切换按钮 -->
+        <div class="theme-toggle-btn" @click="toggleTheme" :title="isDark ? '切换到亮色模式' : '切换到暗黑模式'">
+          <el-icon v-if="isDark"><Moon /></el-icon>
+          <el-icon v-else><Sunny /></el-icon>
+        </div>
+        
+        <!-- 折叠按钮 -->
+        <div class="collapse-btn" @click="toggleCollapse" title="收起侧边栏">
+          <el-icon><DArrowLeft /></el-icon>
+        </div>
+      </div>
+      
+      <!-- 收缩状态下的操作按钮 -->
+      <div class="header-actions-mini" v-if="collapsed">
+        <div class="theme-toggle-btn" @click="toggleTheme" :title="isDark ? '切换到亮色模式' : '切换到暗黑模式'">
+          <el-icon v-if="isDark"><Moon /></el-icon>
+          <el-icon v-else><Sunny /></el-icon>
+        </div>
+        
+        <div class="collapse-btn" @click="toggleCollapse" title="展开侧边栏">
+          <el-icon><DArrowRight /></el-icon>
+        </div>
       </div>
     </div>
 
@@ -87,7 +103,7 @@ const toggleCollapse = () => {
 
 // --- 暗黑模式逻辑 ---
 import { useDark, useToggle } from '@vueuse/core'
-import { Moon, Sunny } from '@element-plus/icons-vue'
+import { Moon, Sunny, DArrowLeft, DArrowRight } from '@element-plus/icons-vue'
 
 const isDark = useDark({
   storageKey: 'app-theme-mode',
@@ -95,7 +111,11 @@ const isDark = useDark({
   valueLight: 'light',
 })
 
-const toggle = useToggle(isDark)
+const toggleFunc = useToggle(isDark)
+const toggleTheme = () => {
+  toggleFunc()
+  console.log('主题切换:', isDark.value ? '暗黑模式' : '亮色模式')
+}
 </script>
 
 <!-- 👇 移除了 scoped，以便能够覆盖全局的 Element Plus 变量 -->
@@ -105,51 +125,60 @@ const toggle = useToggle(isDark)
   flex-direction: column;
   width: 280px;
   height: 100vh;
-  /* 👇 使用 CSS 变量，跟随主题变化 */
   background-color: var(--el-bg-color);
   border-right: 1px solid var(--el-border-color);
   flex-shrink: 0;
-  /* 过渡动画，让切换更丝滑 */
-  transition: background-color 0.3s, border-color 0.3s;
+  transition: width 0.3s, background-color 0.3s, border-color 0.3s;
+  overflow-x: hidden; /* 防止横向滚动条 */
 }
 
 .sidebar-container.collapsed {
-  width: 64px;
+  width: 80px;
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 80px;
-  padding: 0 20px;
+  min-height: 80px;
+  padding: 0 16px;
   border-bottom: 1px solid var(--el-border-color);
-  transition: border-color 0.3s;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.collapsed .sidebar-header {
+  min-height: auto;
+  padding: 16px 12px;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  border-bottom: none; /* 移除收缩状态下的横线 */
 }
 
 .logo-wrapper {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .logo-icon {
   width: 48px;
   height: 48px;
-  background-color: #409EFF;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-size: 24px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .logo-icon img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
 }
 
@@ -158,25 +187,89 @@ const toggle = useToggle(isDark)
   font-weight: bold;
   margin: 0;
   color: var(--el-text-color-primary);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .logo-subtitle {
   font-size: 12px;
   color: #909399;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-/* 👇 新增：将 Switch 挤到最右边 */
-.header-right {
+.logo-icon-mini {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.logo-icon-mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
-  padding: 0 10px;
+}
+
+.header-actions-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
+  transition: all 0.3s;
+  font-size: 16px;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--el-fill-color);
+  color: var(--el-color-primary);
+  transform: scale(1.05);
 }
 
 .collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 18px;
-  color: #606266;
-  margin-left: 10px;
+  background-color: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
+  transition: all 0.3s;
+  font-size: 16px;
+}
+
+.collapse-btn:hover {
+  background-color: var(--el-fill-color);
+  color: var(--el-color-primary);
+  transform: scale(1.05);
 }
 
 .sidebar-menu {
@@ -190,12 +283,26 @@ const toggle = useToggle(isDark)
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: 12px;
+  padding: 12px 20px;
   cursor: pointer;
   border-radius: 8px;
-  margin: 0 8px;
+  margin: 4px 12px;
   color: var(--el-text-color-regular);
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.collapsed .menu-item {
+  padding: 12px;
+  margin: 4px 8px;
+  justify-content: center;
+}
+
+.menu-item .menu-icon {
+  font-size: 20px;
+  flex-shrink: 0;
 }
 
 .menu-item:hover {
@@ -210,9 +317,14 @@ const toggle = useToggle(isDark)
 .sidebar-footer {
   display: flex;
   align-items: center;
-  padding: 10px 20px;
+  padding: 16px 20px;
   border-top: 1px solid var(--el-border-color);
   transition: border-color 0.3s;
+  flex-shrink: 0;
+}
+
+.collapsed .sidebar-footer {
+  display: none;
 }
 
 .user-avatar {
